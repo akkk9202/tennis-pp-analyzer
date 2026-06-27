@@ -3,16 +3,13 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main]
-  # Allow manual trigger from Actions tab
   workflow_dispatch:
 
-# Required for OIDC-based GitHub Pages deployment (no PAT needed)
 permissions:
   contents: read
   pages: write
   id-token: write
 
-# Prevent concurrent deployments (second run waits for first)
 concurrency:
   group: "pages"
   cancel-in-progress: false
@@ -37,19 +34,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # Tests must pass before we build or deploy
       - name: Run tests
         run: npm run test:run
 
       - name: Build
         run: npm run build
-        # If your repo is named something other than tennis-pp-analyzer,
-        # set VITE_BASE_URL here to match. Example:
-        # env:
-        #   VITE_BASE_URL: /my-repo-name/
-
-      - name: Setup GitHub Pages
-        uses: actions/configure-pages@v4
 
       - name: Upload artifact to Pages
         uses: actions/upload-pages-artifact@v3
