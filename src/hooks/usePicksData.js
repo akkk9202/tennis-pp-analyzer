@@ -12,7 +12,8 @@
 import { useState, useCallback, useRef } from 'react';
 import { getAllTennisOdds, OddsApiError } from '../api/oddsApi.js';
 import { fetchTennisProps } from '../api/prizePicksApi.js';
-import { parsePrizePicksData, parseOddsData, buildPicks, deduplicatePicks } from '../utils/matching.js';
+import { fetchUnderdogTennisProps } from '../api/underdogApi.js';
+import { parsePrizePicksData, parseUnderdogData, parseOddsData, buildPicks, deduplicatePicks } from '../utils/matching.js';
 
 /** How long to reuse cached data before requiring a refresh (ms) */
 const CACHE_TTL_MS = 5 * 60 * 1000;
@@ -35,6 +36,7 @@ export function usePicksData() {
     loading: false,
     error: null,
     ppWarning: null,
+    udWarning: null,
     lastUpdated: null,
     requestsRemaining: null,
   });
@@ -71,16 +73,19 @@ export function usePicksData() {
       return;
     }
 
-    setState(s => ({ ...s, loading: true, error: null, ppWarning: null }));
+    setState(s => ({ ...s, loading: true, error: null, ppWarning: null, udWarning: null }));
 
     let oddsResult = { events: [], requestsRemaining: null };
     let ppRaw = null;
+    let udRaw = null;
     let ppWarning = null;
+    let udWarning = null;
 
-    // Fetch both APIs concurrently
-    const [oddsSettled, ppSettled] = await Promise.allSettled([
+    // Fetch all three sources concurrently
+    const [oddsSettled, ppSettled, udSettled] = await Promise.allSettled([
       getAllTennisOdds(apiKey),
       fetchTennisProps(),
+      fetchUnderdogTennisProps(),
     ]);
 
     if (oddsSettled.status === 'rejected') {
@@ -99,13 +104,21 @@ export function usePicksData() {
     oddsResult = oddsSettled.value;
 
     if (ppSettled.status === 'rejected') {
-      ppWarning = `PrizePicks data unavailable: ${ppSettled.reason?.message ?? 'unknown error'}. Showing odds data only.`;
+      ppWarning = `PrizePicks unavailable: ${ppSettled.reason?.message ?? 'unknown'}. Showing Underdog only.`;
     } else {
       ppRaw = ppSettled.value;
     }
 
+    if (udSettled.status === 'rejected') {
+      udWarning = `Underdog unavailable: ${udSettled.reason?.message ?? 'unknown'}.`;
+    } else {
+      udRaw = udSettled.value;
+    }
+
     const rawMatches = parseOddsData(oddsResult.events, null);
-    const rawProps = ppRaw ? parsePrizePicksData(ppRaw) : [];
+    const ppProps    = ppRaw ? parsePrizePicksData(ppRaw).map(p => ({ ...p, source: 'prizepicks' })) : [];
+    const udProps    = udRaw ? parseUnderdogData(udRaw) : [];
+    const rawProps   = [...ppProps, ...udProps];
 
     // Update cache
     cache.current = { rawMatches, rawProps, ts: now };
@@ -117,7 +130,8 @@ export function usePicksData() {
       matches: rawMatches,
       loading: false,
       error: null,
-      ppWarning,
+      ppWarning: ppWarning ?? (udWarning && !ppRaw ? udWarning : null),
+      udWarning,
       lastUpdated: new Date(),
       requestsRemaining: oddsResult.requestsRemaining,
     });

@@ -348,3 +348,60 @@ export function deduplicatePicks(picks) {
   }
   return [...seen.values()];
 }
+
+// ─── Underdog Parser ────────────────────────────────────────────────────────
+
+const UD_STAT_MAP = {
+  'games played': 'total_games',
+  'games won':    'total_games_one',
+};
+
+const UD_SKIP = new Set([
+  'aces', 'double faults', 'breakpoints won',
+  '1st set games played', '1st set games won',
+  'sets played', 'sets won', 'tiebreakers played',
+]);
+
+/**
+ * Parse Underdog Fantasy /over_under_lines?sport_id=TENNIS response.
+ * Extracts player name from the title field: "Aryna Sabalenka Games Played O/U (vs ...)"
+ *
+ * @param {Object} raw  Full Underdog API response
+ * @returns {Array<UDProp>}
+ */
+export function parseUnderdogData(raw) {
+  if (!raw || typeof raw !== 'object') return [];
+
+  return (raw.over_under_lines || [])
+    .map(l => {
+      const ou          = l.over_under ?? {};
+      const appStat     = ou.appearance_stat ?? {};
+      const displayStat = appStat.display_stat ?? '';
+      const statLower   = displayStat.toLowerCase().trim();
+
+      if (UD_SKIP.has(statLower)) return null;
+
+      const propType = UD_STAT_MAP[statLower];
+      if (!propType) return null;
+
+      // Title format: "Aryna Sabalenka Games Played O/U (vs McCartney Kessler)"
+      const title      = ou.title ?? '';
+      const playerName = title.replace(new RegExp(` ${displayStat} O\\/U.*$`), '').trim();
+      if (!playerName) return null;
+
+      const line = parseFloat(l.stat_value);
+      if (isNaN(line)) return null;
+
+      return {
+        id:          `ud_${l.id}`,
+        playerName,
+        statType:    displayStat,
+        propType,
+        line,
+        source:      'underdog',
+        startTime:   l.expires_at ?? '',
+        description: title,
+      };
+    })
+    .filter(Boolean);
+}

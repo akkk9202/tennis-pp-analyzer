@@ -12,7 +12,7 @@ const QUICK_LINKS = [
 ];
 
 export default function Dashboard({ picksData, apiKey }) {
-  const { picks, matches, loading, error, ppWarning, lastUpdated, requestsRemaining, refresh, setAces } = picksData;
+  const { picks, matches, loading, error, ppWarning, udWarning, lastUpdated, requestsRemaining, refresh, setAces } = picksData;
   const [aceInputs, setAceInputs] = useState({});
   const [aceOpen, setAceOpen]     = useState(null);
   const [showSkipped, setShowSkipped] = useState(false);
@@ -79,6 +79,7 @@ export default function Dashboard({ picksData, apiKey }) {
       {/* ── Errors / warnings ── */}
       {error    && <div className="alert alert-error">{error}</div>}
       {ppWarning && <div className="alert alert-warning">{ppWarning}</div>}
+      {udWarning && <div className="alert alert-warning">{udWarning}</div>}
 
       {/* ── Loading skeletons ── */}
       {loading && [80, 72, 64].map((h, i) => (
@@ -213,9 +214,15 @@ function PickCard({ pick }) {
   return (
     <div className={`pick-card ${confClass}`}>
       <div>
-        <div className="flex gap-8">
+        <div className="flex gap-8" style={{ flexWrap: 'wrap' }}>
           <span style={{ fontSize:15, fontWeight:600 }}>{pick.playerName}</span>
           <span className={`badge ${badgeClass}`}>{pick.conf}</span>
+          {pick.source === 'underdog' && (
+            <span className="badge" style={{ background:'#1a0a2e', color:'#a78bfa', border:'1px solid #4c1d95', fontSize:10 }}>Underdog</span>
+          )}
+          {pick.source === 'prizepicks' && (
+            <span className="badge" style={{ background:'#0f0a2e', color:'#818cf8', border:'1px solid #3730a3', fontSize:10 }}>PrizePicks</span>
+          )}
           {pick.approximate && (
             <span className="badge badge-skip" title="Under odds estimated from h2h moneyline — verify on sportsbook for highest accuracy">
               ~est
