@@ -10,28 +10,27 @@
  */
 
 const PP_BASE = 'https://api.prizepicks.com';
-const CORS_PROXY = 'https://corsproxy.io/?';
-
 /**
- * Fetch with a 10-second timeout. On CORS/network failure, retries via proxy.
- * @param {string} url
- * @returns {Promise<Response>}
+ * Fetch with timeout. On CORS failure retries via allorigins (handles large payloads).
  */
 async function fetchWithFallback(url) {
-  // Direct attempt
   try {
     const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
     if (res.ok) return res;
-    // 4xx/5xx from PP itself — no point proxying
     if (res.status >= 400) throw new Error(`PrizePicks returned ${res.status}`);
     return res;
   } catch (err) {
     if (err.name === 'AbortError') throw new Error('PrizePicks request timed out');
-    // Network/CORS error — try proxy
-    const proxyUrl = `${CORS_PROXY}${encodeURIComponent(url)}`;
-    const res = await fetch(proxyUrl, { signal: AbortSignal.timeout(15000) });
-    if (!res.ok) throw new Error(`PrizePicks unavailable (proxy also failed: ${res.status})`);
-    return res;
+  }
+  try {
+    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+    const res = await fetch(proxyUrl, { signal: AbortSignal.timeout(20000) });
+    if (!res.ok) throw new Error(`proxy ${res.status}`);
+    const wrapper = await res.json();
+    if (!wrapper.contents) throw new Error('empty proxy response');
+    return new Response(wrapper.contents, { status: 200, headers: { 'Content-Type': 'application/json' } });
+  } catch {
+    throw new Error('PrizePicks unavailable — using Underdog data only.');
   }
 }
 
