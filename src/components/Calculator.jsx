@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { fantasyScoreRec, totalGamesRec, totalGamesOneRec, moneylineToProb } from '../utils/calculations.js';
+import { fantasyScoreRec, totalGamesRec, totalGamesWonRec, moneylineToProb } from '../utils/calculations.js';
 
-const TABS = ['Fantasy Score', 'Total Games', 'Total Games One'];
+const TABS = ['Fantasy Score', 'Total Games', 'Total Games Won'];
 
 export default function Calculator() {
   const [tab, setTab] = useState(0);
@@ -18,7 +18,7 @@ export default function Calculator() {
       </div>
       {tab === 0 && <FantasyScoreCalc />}
       {tab === 1 && <TotalGamesCalc />}
-      {tab === 2 && <TotalGamesOneCalc />}
+      {tab === 2 && <TotalGamesWonCalc />}
     </div>
   );
 }
@@ -176,9 +176,9 @@ function TotalGamesCalc() {
   );
 }
 
-// ─── Total Games One ────────────────────────────────────────────────────────
+// ─── Total Games Won ────────────────────────────────────────────────────────
 
-function TotalGamesOneCalc() {
+function TotalGamesWonCalc() {
   const [odds, setOdds]   = useState('');
   const [line, setLine]   = useState('');
   const [result, setResult] = useState(null);
@@ -189,7 +189,7 @@ function TotalGamesOneCalc() {
     if (isNaN(o)) { setError('Enter the under odds.'); return; }
     setError('');
     const ln = parseFloat(line) || null;
-    setResult({ ...totalGamesOneRec(o), o, ln });
+    setResult({ ...totalGamesWonRec(o), o, ln });
   }
 
   return (

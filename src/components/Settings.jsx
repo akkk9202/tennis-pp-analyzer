@@ -88,9 +88,9 @@ export default function Settings({ settings, onChange }) {
 
         <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
           <Step n={1} title="The Odds API" text="Fetches live tennis matches + h2h moneylines + set spreads from Bovada, DraftKings, FanDuel." />
-          <Step n={2} title="PrizePicks" text="Pulls today's tennis props (Fantasy Score, Total Games, Total Games One) from PrizePicks' unofficial public API. No login required." />
+          <Step n={2} title="PrizePicks" text="Pulls today's tennis props (Fantasy Score, Total Games, Total Games Won) from PrizePicks' unofficial public API. No login required." />
           <Step n={3} title="Auto-matching" text="Matches player names between both sources using fuzzy matching (handles diacritics, abbreviations, last-name-only). Unmatched props are excluded." />
-          <Step n={4} title="Calculations" text="Runs each matched prop through the correct formula — Fantasy Score, Total Games, or Total Games One — and ranks by confidence." />
+          <Step n={4} title="Calculations" text="Runs each matched prop through the correct formula — Fantasy Score, Total Games, or Total Games Won — and ranks by confidence." />
           <Step n={5} title="Fantasy Score aces" text="Ace lines aren't in any public API. For Fantasy Score props, enter the expected ace count from Bet365 manually. Everything else is auto-calculated." />
         </div>
       </div>
@@ -113,7 +113,7 @@ export default function Settings({ settings, onChange }) {
             rules={['prob ≥ 80% → HIGH', 'prob ≥ 67% → MEDIUM', 'prob ≥ 57% → LOW', 'prob < 57% → SKIP']}
           />
           <FormulaBox
-            title="Total Games One"
+            title="Total Games Won"
             formula="sportsbook under odds ≤ -135 required"
             detail="Only bet when the sportsbook under odds are -135 or stronger. Even spreads (-25 vs -105) = even market = skip."
             rules={['odds ≤ -200 → HIGH', 'odds ≤ -135 → MEDIUM', 'odds > -135 → SKIP']}

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 
 const STORAGE_KEY = 'tppa_tracker_v1';
 
-const PROP_TYPES   = ['Fantasy Score', 'Total Games', 'Total Games One'];
+const PROP_TYPES   = ['Fantasy Score', 'Total Games', 'Total Games Won'];
 const CONF_LEVELS  = ['HIGH', 'MEDIUM', 'LOW'];
 const RESULT_OPTS  = ['pending', 'hit', 'miss'];
 
